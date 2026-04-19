@@ -8,11 +8,47 @@ import { DashboardScreen } from "./screens/DashboardScreen";
 import { DiaryScreen } from "./screens/DiaryScreen";
 import { HrtScreen } from "./screens/HrtScreen";
 import { SymptomsScreen } from "./screens/SymptomsScreen";
-import { theme } from "./theme";
+import { getTheme } from "./theme";
+
+function createRootStyles(theme) {
+  return StyleSheet.create({
+    app: {
+      flex: 1,
+      backgroundColor: theme.colors.bg,
+    },
+    topBar: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 8,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: theme.colors.bg2,
+    },
+    topBarTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: 20,
+      fontWeight: "700",
+    },
+    topBarSub: {
+      color: theme.colors.textTertiary,
+      marginTop: 2,
+    },
+    logout: {
+      color: theme.colors.pinkAccent,
+      fontWeight: "600",
+    },
+    content: {
+      flex: 1,
+    },
+  });
+}
 
 export function Root() {
-  const { activeTab, login, logout, register, session, setActiveTab } = useApp();
+  const { activeTab, login, logout, register, session, setActiveTab, colorScheme } = useApp();
   const [loading, setLoading] = useState(false);
+  const theme = getTheme(colorScheme);
+  const styles = createRootStyles(theme);
 
   async function run(action) {
     setLoading(true);
@@ -27,7 +63,7 @@ export function Root() {
     return (
       <AuthScreen
         loading={loading}
-        onLogin={(email, password) => run(() => login(email, password))}
+        onLogin={(email, password, rememberMe) => run(() => login(email, password, rememberMe))}
         onRegister={(payload) => run(() => register(payload))}
       />
     );
@@ -59,33 +95,3 @@ export function Root() {
   );
 }
 
-const styles = StyleSheet.create({
-  app: {
-    flex: 1,
-    backgroundColor: theme.colors.bg,
-  },
-  topBar: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  topBarTitle: {
-    color: theme.colors.textPrimary,
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  topBarSub: {
-    color: theme.colors.textTertiary,
-    marginTop: 2,
-  },
-  logout: {
-    color: theme.colors.pinkAccent,
-    fontWeight: "600",
-  },
-  content: {
-    flex: 1,
-  },
-});

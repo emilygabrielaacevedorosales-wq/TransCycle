@@ -3,7 +3,8 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { getDashboardData } from "../api/client";
 import { Card, ConfidenceBar, PhaseStripe, Pill, Screen, StatCard } from "../components";
 import { CycleRing } from "../CycleRing";
-import { colorForPhase, theme } from "../theme";
+import { colorForPhase } from "../theme";
+import { useTheme } from "../hooks/useTheme";
 
 const phaseNames = {
   follicular_early: "Folicular temprana",
@@ -24,6 +25,7 @@ const phaseDescriptions = {
 };
 
 export function DashboardScreen({ session }) {
+  const theme = useTheme();
   const [state, setState] = useState({ loading: true, error: "", status: null, ring: [] });
 
   async function load() {
@@ -44,6 +46,8 @@ export function DashboardScreen({ session }) {
   const hour = new Date().getHours();
   const greeting = hour < 13 ? "Buenos dias" : hour < 20 ? "Buenas tardes" : "Buenas noches";
 
+  const dynamicStyles = createDynamicStyles(theme);
+
   if (state.loading) {
     return (
       <Screen>
@@ -55,11 +59,11 @@ export function DashboardScreen({ session }) {
   if (state.error || !state.status) {
     return (
       <Screen>
-        <Card style={styles.errorCard}>
-          <Text style={styles.errorTitle}>No se pudo cargar el dashboard</Text>
-          <Text style={styles.errorText}>{state.error || "Faltan datos del ciclo."}</Text>
+        <Card style={dynamicStyles.errorCard}>
+          <Text style={dynamicStyles.errorTitle}>No se pudo cargar el dashboard</Text>
+          <Text style={dynamicStyles.errorText}>{state.error || "Faltan datos del ciclo."}</Text>
           <Pressable onPress={load}>
-            <Text style={styles.retry}>Reintentar</Text>
+            <Text style={dynamicStyles.retry}>Reintentar</Text>
           </Pressable>
         </Card>
       </Screen>
@@ -71,22 +75,22 @@ export function DashboardScreen({ session }) {
 
   return (
     <Screen>
-      <View style={styles.header}>
+      <View style={dynamicStyles.header}>
         <View>
-          <Text style={styles.greeting}>{greeting}</Text>
-          <Text style={styles.name}>{session.user.display_name || "TransCycle"}</Text>
+          <Text style={dynamicStyles.greeting}>{greeting}</Text>
+          <Text style={dynamicStyles.name}>{session.user.display_name || "TransCycle"}</Text>
         </View>
         <Pill tone={session.mode === "demo" ? "accent" : "default"}>{session.mode === "demo" ? "Modo demo" : "API conectada"}</Pill>
       </View>
 
       {typeof status.daysUntilGhostPeriod === "number" && status.daysUntilGhostPeriod <= 5 ? (
-        <Card style={styles.banner}>
-          <Text style={styles.bannerTitle}>Periodo fantasma {status.daysUntilGhostPeriod === 0 ? "hoy" : `en ${status.daysUntilGhostPeriod} dias`}</Text>
-          <Text style={styles.bannerText}>Se aproxima la fase de valle. Observa energia, sensibilidad y estado de animo.</Text>
+        <Card style={dynamicStyles.banner}>
+          <Text style={dynamicStyles.bannerTitle}>Periodo fantasma {status.daysUntilGhostPeriod === 0 ? "hoy" : `en ${status.daysUntilGhostPeriod} dias`}</Text>
+          <Text style={dynamicStyles.bannerText}>Se aproxima la fase de valle. Observa energia, sensibilidad y estado de animo.</Text>
         </Card>
       ) : null}
 
-      <Card style={styles.ringCard}>
+      <Card style={dynamicStyles.ringCard}>
         <CycleRing days={ring} currentDay={status.currentDay} phaseName={phaseName} />
       </Card>
 
@@ -96,7 +100,7 @@ export function DashboardScreen({ session }) {
         description={phaseDescriptions[status.phase] || "Seguimiento del estado actual del ciclo virtual."}
       />
 
-      <View style={styles.statsRow}>
+      <View style={dynamicStyles.statsRow}>
         <StatCard value={`${status.currentDay}/28`} label="Dia del ciclo" color={colorForPhase(status.phase)} />
         <StatCard value={typeof status.daysUntilGhostPeriod === "number" ? `${status.daysUntilGhostPeriod}d` : "-"} label="Hasta periodo" color={theme.colors.trough} />
         <StatCard value={status.e2Trend === "rising" ? "↑" : status.e2Trend === "falling" ? "↓" : "→"} label="Tendencia E2" color={theme.colors.pinkAccent} />
@@ -109,55 +113,59 @@ export function DashboardScreen({ session }) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  greeting: {
-    color: theme.colors.textSecondary,
-    fontSize: 15,
-  },
-  name: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: theme.colors.textPrimary,
-    marginTop: 2,
-  },
-  banner: {
-    backgroundColor: "#FDF0F0",
-    gap: 6,
-  },
-  bannerTitle: {
-    color: "#B35A5A",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  bannerText: {
-    color: theme.colors.textSecondary,
-    lineHeight: 20,
-  },
-  ringCard: {
-    alignItems: "center",
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  errorCard: {
-    gap: 12,
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: theme.colors.textPrimary,
-  },
-  errorText: {
-    color: theme.colors.textSecondary,
-  },
-  retry: {
-    color: theme.colors.pinkAccent,
-    fontWeight: "600",
-  },
-});
+function createDynamicStyles(theme) {
+  return StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+    },
+    greeting: {
+      color: theme.colors.textSecondary,
+      fontSize: 15,
+    },
+    name: {
+      fontSize: 28,
+      fontWeight: "700",
+      color: theme.colors.textPrimary,
+      marginTop: 2,
+    },
+    banner: {
+      backgroundColor: "#FDF0F0",
+      gap: 6,
+      borderLeftColor: "#E88C8C",
+      borderLeftWidth: 4,
+    },
+    bannerTitle: {
+      color: "#B35A5A",
+      fontWeight: "700",
+      fontSize: 15,
+    },
+    bannerText: {
+      color: theme.colors.textSecondary,
+      lineHeight: 20,
+    },
+    ringCard: {
+      alignItems: "center",
+    },
+    statsRow: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    errorCard: {
+      gap: 12,
+    },
+    errorTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: theme.colors.textPrimary,
+    },
+    errorText: {
+      color: theme.colors.textSecondary,
+    },
+    retry: {
+      color: theme.colors.pinkAccent,
+      fontWeight: "600",
+    },
+  });
+}

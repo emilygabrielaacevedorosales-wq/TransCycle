@@ -1,4 +1,4 @@
-export const theme = {
+export const lightTheme = {
   colors: {
     follicularEarly: "#8BBFB8",
     follicularLate: "#B8AED4",
@@ -17,20 +17,34 @@ export const theme = {
     border: "rgba(0, 0, 0, 0.08)",
     white: "#FFFFFF",
   },
-  radius: {
-    sm: 10,
-    md: 16,
-    lg: 24,
-    pill: 999,
-  },
-  spacing: {
-    xs: 6,
-    sm: 10,
-    md: 16,
-    lg: 20,
-    xl: 28,
+};
+
+export const darkTheme = {
+  colors: {
+    follicularEarly: "#8BBFB8",
+    follicularLate: "#B8AED4",
+    ovulationVirtual: "#E8A4B0",
+    lutealEarly: "#D4B87A",
+    lutealLate: "#D4A96A",
+    trough: "#E88C8C",
+    bg: "#1A1815",
+    bg2: "#2A251F",
+    bg3: "#3A3530",
+    textPrimary: "#F5F3F0",
+    textSecondary: "#D4CBC0",
+    textTertiary: "#A09890",
+    pinkAccent: "#E8A4B0",
+    teal: "#8BBFB8",
+    border: "rgba(255, 255, 255, 0.08)",
+    white: "#FFFFFF",
   },
 };
+
+export const theme = lightTheme;
+
+export function getTheme(colorScheme) {
+  return colorScheme === "dark" ? darkTheme : lightTheme;
+}
 
 export function colorForPhase(phase) {
   switch (phase) {

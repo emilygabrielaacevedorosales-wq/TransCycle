@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { getSymptoms, logSymptoms } from "../api/client";
 import { Card, PrimaryButton, Screen, SectionLabel } from "../components";
 import { average, formatRelativeDate } from "../utils";
-import { theme } from "../theme";
+import { useTheme } from "../hooks/useTheme";
 
 const symptomLabels = {
   moodScore: "Estado de animo",
@@ -28,6 +28,7 @@ const initialScores = {
 };
 
 export function SymptomsScreen({ session }) {
+  const theme = useTheme();
   const [scores, setScores] = useState(initialScores);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +69,7 @@ export function SymptomsScreen({ session }) {
   }
 
   const avgScore = useMemo(() => average(Object.values(scores)), [scores]);
+  const styles = createSymptomsStyles(theme);
 
   return (
     <Screen>
@@ -143,84 +145,86 @@ export function SymptomsScreen({ session }) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    gap: 4,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "700",
-    color: theme.colors.textPrimary,
-  },
-  subtitle: {
-    color: theme.colors.textSecondary,
-  },
-  formCard: {
-    gap: 14,
-  },
-  formHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  average: {
-    color: theme.colors.pinkAccent,
-    fontWeight: "600",
-  },
-  sliderRow: {
-    gap: 8,
-  },
-  sliderHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  sliderLabel: {
-    color: theme.colors.textSecondary,
-    fontSize: 13,
-  },
-  sliderValue: {
-    color: theme.colors.textPrimary,
-    fontWeight: "700",
-  },
-  segmentRow: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  segment: {
-    flex: 1,
-    height: 12,
-    borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.bg3,
-  },
-  segmentActive: {
-    backgroundColor: theme.colors.pinkAccent,
-  },
-  error: {
-    color: theme.colors.trough,
-  },
-  historyCard: {
-    paddingVertical: 14,
-    gap: 14,
-  },
-  historyHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  historyDate: {
-    color: theme.colors.textSecondary,
-    fontWeight: "600",
-  },
-  historyMeta: {
-    color: theme.colors.textTertiary,
-  },
-  historyBars: {
-    flexDirection: "row",
-    gap: 6,
-    alignItems: "flex-end",
-  },
-  historyBar: {
-    width: 12,
-    borderRadius: 4,
-    backgroundColor: theme.colors.pinkAccent,
-  },
-});
+function createSymptomsStyles(theme) {
+  return StyleSheet.create({
+    header: {
+      gap: 4,
+    },
+    title: {
+      fontSize: 30,
+      fontWeight: "700",
+      color: theme.colors.textPrimary,
+    },
+    subtitle: {
+      color: theme.colors.textSecondary,
+    },
+    formCard: {
+      gap: 14,
+    },
+    formHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    average: {
+      color: theme.colors.pinkAccent,
+      fontWeight: "600",
+    },
+    sliderRow: {
+      gap: 8,
+    },
+    sliderHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    sliderLabel: {
+      color: theme.colors.textSecondary,
+      fontSize: 13,
+    },
+    sliderValue: {
+      color: theme.colors.textPrimary,
+      fontWeight: "700",
+    },
+    segmentRow: {
+      flexDirection: "row",
+      gap: 6,
+    },
+    segment: {
+      flex: 1,
+      height: 12,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.bg3,
+    },
+    segmentActive: {
+      backgroundColor: theme.colors.pinkAccent,
+    },
+    error: {
+      color: theme.colors.trough,
+    },
+    historyCard: {
+      paddingVertical: 14,
+      gap: 14,
+    },
+    historyHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    historyDate: {
+      color: theme.colors.textSecondary,
+      fontWeight: "600",
+    },
+    historyMeta: {
+      color: theme.colors.textTertiary,
+    },
+    historyBars: {
+      flexDirection: "row",
+      gap: 6,
+      alignItems: "flex-end",
+    },
+    historyBar: {
+      width: 12,
+      borderRadius: 4,
+      backgroundColor: theme.colors.pinkAccent,
+    },
+  });
+}

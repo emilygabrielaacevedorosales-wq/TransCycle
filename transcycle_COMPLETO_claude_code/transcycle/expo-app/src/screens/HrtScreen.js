@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { getDrugs, getMedications, addMedication, getAdministrationLog, logAdministration } from "../api/client";
 import { Card, PrimaryButton, Screen, SectionLabel, EmptyState, Pill, AppTextInput } from "../components";
-import { theme } from "../theme";
-import { scheduleMedicationNotifications, cancelMedicationNotifications, formatNextDose, getOptimalTimes } from "../notifications/scheduler";
+import { useTheme } from "../hooks/useTheme";
+import { scheduleMedicationNotifications, cancelMedicationNotifications, formatNextDose, getOptimalTimes, getMedicationWindowStatus } from "../notifications/scheduler";
 import { useApp } from "../context/AppContext";
 
 export function HrtScreen({ session }) {
   const { activeTab } = useApp();
+  const theme = useTheme();
   const [loadError, setLoadError] = useState(null);
 
   const [drugs, setDrugs] = useState([]);
@@ -18,6 +19,8 @@ export function HrtScreen({ session }) {
   const [takingDose, setTakingDose] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState("");
+  const [medicationWindows, setMedicationWindows] = useState({});
+  const [missedDoses, setMissedDoses] = useState({});
 
   // Form state
   const [selectedDrug, setSelectedDrug] = useState(null);
@@ -66,6 +69,35 @@ export function HrtScreen({ session }) {
     }
   }, [activeTab, session]);
 
+  useEffect(() => {
+    // Actualizar estados de ventanas de toma cada segundo
+    if (medications.length === 0) return;
+
+    const updateWindows = () => {
+      const newWindows = {};
+      const newMissed = { ...missedDoses };
+
+      medications.forEach((med) => {
+        const medKey = med.id || med.drug_key;
+        const status = getMedicationWindowStatus(med, null);
+        newWindows[medKey] = status;
+
+        // Marcar como fallida si pasó la ventana de 30 minutos
+        if (status.status === "missed" && !newMissed[medKey]) {
+          newMissed[medKey] = true;
+          setMessage(`⚠️ ${med.display_name} - Dosis no tomada. Próxima dosis en ${med.frequency_hours}h`);
+        }
+      });
+
+      setMedicationWindows(newWindows);
+      setMissedDoses(newMissed);
+    };
+
+    updateWindows();
+    const interval = setInterval(updateWindows, 1000);
+    return () => clearInterval(interval);
+  }, [medications, missedDoses]);
+
   async function handleAddMedication() {
     if (!selectedDrug || !doseAmount || !frequencyHours) {
       setMessage("Completa todos los campos");
@@ -107,6 +139,10 @@ export function HrtScreen({ session }) {
   async function handleTakeDose(medication) {
     setTakingDose(medication.id || medication.drug_key);
     try {
+      const medKey = medication.id || medication.drug_key;
+      const windowStatus = medicationWindows[medKey] || { status: "idle" };
+      const wasLate = windowStatus.status === "warning";
+
       const payload = {
         medication_id: medication.id,
         drug_key: medication.drug_key,
@@ -115,11 +151,17 @@ export function HrtScreen({ session }) {
         administered_at: new Date(),
         body_site: null,
         notes: null,
-        was_late: false,
+        was_late: wasLate,
       };
 
       await logAdministration(session, session?.mode || "demo", payload);
-      setMessage("✓ Dosis registrada");
+
+      // Limpiar estado de dosis fallida
+      const newMissed = { ...missedDoses };
+      delete newMissed[medKey];
+      setMissedDoses(newMissed);
+
+      setMessage(wasLate ? "✓ Dosis tardía registrada" : "✓ Dosis registrada a tiempo");
 
       // Reprogramar notificaciones
       await scheduleMedicationNotifications(medication);
@@ -166,6 +208,8 @@ export function HrtScreen({ session }) {
     return logDate === today;
   });
 
+  const styles = createHrtStyles(theme);
+
   if (loading && medications.length === 0) {
     return (
       <Screen>
@@ -211,35 +255,57 @@ export function HrtScreen({ session }) {
       ) : (
         <View>
           <SectionLabel>Medicamentos activos</SectionLabel>
-          {medications.map((med) => (
-            <Card key={med.id || med.drug_key} style={styles.medCard}>
-              <View style={styles.medHeader}>
-                <View style={styles.medInfo}>
-                  <Text style={styles.medName}>{med.display_name}</Text>
-                  <Pill tone={med.category === "antiandrogen" ? "accent" : "default"}>
-                    {med.category === "estrogen" && "Estrógeno"}
-                    {med.category === "progesterone" && "Progesterona"}
-                    {med.category === "antiandrogen" && "Bloq. Androgénico"}
-                  </Pill>
+          {medications.map((med) => {
+            const medKey = med.id || med.drug_key;
+            const windowStatus = medicationWindows[medKey] || { status: "idle" };
+            const isInWindow = windowStatus.status === "active" || windowStatus.status === "warning";
+            const isPastTime = windowStatus.isPastTime || false;
+
+            return (
+              <Card
+                key={medKey}
+                style={[
+                  styles.medCard,
+                  isInWindow && { borderWidth: 2, borderColor: isPastTime ? "#FF6B6B" : theme.colors.pinkAccent },
+                ]}
+              >
+                <View style={styles.medHeader}>
+                  <View style={styles.medInfo}>
+                    <Text style={styles.medName}>{med.display_name}</Text>
+                    <Pill tone={med.category === "antiandrogen" ? "accent" : "default"}>
+                      {med.category === "estrogen" && "Estrógeno"}
+                      {med.category === "progesterone" && "Progesterona"}
+                      {med.category === "antiandrogen" && "Bloq. Androgénico"}
+                    </Pill>
+                  </View>
+                  <Pressable onPress={() => handleRemoveMedication(med)}>
+                    <Text style={styles.removeBtn}>✕</Text>
+                  </Pressable>
                 </View>
-                <Pressable onPress={() => handleRemoveMedication(med)}>
-                  <Text style={styles.removeBtn}>✕</Text>
-                </Pressable>
-              </View>
 
-              <Text style={styles.dosage}>
-                {med.dose_amount} {med.dose_unit} · cada {med.frequency_hours}h
-              </Text>
-              <Text style={styles.nextDose}>{formatNextDose(med.frequency_hours, med.preferred_times)}</Text>
+                <Text style={styles.dosage}>
+                  {med.dose_amount} {med.dose_unit} · cada {med.frequency_hours}h
+                </Text>
 
-              <PrimaryButton
-                title="Tomar ahora"
-                onPress={() => handleTakeDose(med)}
-                disabled={takingDose === (med.id || med.drug_key)}
-                loading={takingDose === (med.id || med.drug_key)}
-              />
-            </Card>
-          ))}
+                {isInWindow && windowStatus.minutesRemaining !== null ? (
+                  <View style={styles.timerRow}>
+                    <Text style={[styles.timerText, isPastTime && { color: "#FF6B6B", fontWeight: "700" }]}>
+                      {isPastTime ? "⏱️ PASÓ LA HORA:" : "⏰"} {windowStatus.minutesRemaining} min restantes
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.nextDose}>{formatNextDose(med.frequency_hours, med.preferred_times)}</Text>
+                )}
+
+                <PrimaryButton
+                  title={isInWindow ? "✓ Tomar ahora" : "Tomar ahora"}
+                  onPress={() => handleTakeDose(med)}
+                  disabled={takingDose === medKey}
+                  loading={takingDose === medKey}
+                />
+              </Card>
+            );
+          })}
         </View>
       )}
 
@@ -364,49 +430,53 @@ export function HrtScreen({ session }) {
   );
 }
 
-const styles = StyleSheet.create({
-  centerContent: { flex: 1, justifyContent: "center", alignItems: "center", gap: 16 },
-  loadingText: { color: theme.colors.textSecondary, fontSize: 14 },
-  header: { marginBottom: 8, gap: 4 },
-  title: { fontSize: 30, fontWeight: "700", color: theme.colors.textPrimary },
-  subtitle: { color: theme.colors.textSecondary, fontSize: 14 },
-  messageCard: { padding: 12, borderRadius: 12, marginBottom: 12 },
-  successCard: { backgroundColor: "#E8F5E9", borderColor: "#4CAF50" },
-  errorCard: { backgroundColor: "#FFEBEE", borderColor: "#F44336" },
-  messageText: { fontSize: 14, color: theme.colors.textPrimary, fontWeight: "600" },
-  medCard: { marginBottom: 12 },
-  medHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 },
-  medInfo: { flex: 1 },
-  medName: { fontSize: 16, fontWeight: "700", color: theme.colors.textPrimary, marginBottom: 6 },
-  dosage: { fontSize: 13, color: theme.colors.textSecondary, marginBottom: 4 },
-  nextDose: { fontSize: 12, color: theme.colors.pinkAccent, fontWeight: "600", marginBottom: 10 },
-  removeBtn: { fontSize: 20, color: theme.colors.textTertiary, fontWeight: "600" },
-  noTakes: { fontSize: 13, color: theme.colors.textTertiary, fontStyle: "italic", marginBottom: 12 },
-  takeCard: { marginBottom: 8, padding: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  takeTime: { fontSize: 13, fontWeight: "700", color: theme.colors.pinkAccent },
-  takeMed: { fontSize: 12, color: theme.colors.textSecondary },
-  takeDose: { fontSize: 12, color: theme.colors.textTertiary },
-  formCard: { padding: 16, marginBottom: 12 },
-  fieldLabel: { fontSize: 12, fontWeight: "700", color: theme.colors.textSecondary, marginTop: 12, marginBottom: 8, textTransform: "uppercase" },
-  drugSelector: { marginBottom: 12, marginHorizontal: -16, paddingHorizontal: 16 },
-  drugPill: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: theme.colors.bg3, marginRight: 8 },
-  drugPillSelected: { backgroundColor: theme.colors.pinkAccent },
-  drugPillText: { fontSize: 12, color: theme.colors.textPrimary, fontWeight: "600" },
-  drugPillTextSelected: { color: theme.colors.white },
-  doseRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  doseInput: { flex: 1, height: 40 },
-  unitSelector: { flexDirection: "row", gap: 4 },
-  unitBtn: { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: theme.colors.bg3, borderRadius: 8 },
-  unitBtnActive: { backgroundColor: theme.colors.pinkAccent },
-  unitBtnText: { fontSize: 11, fontWeight: "600", color: theme.colors.textPrimary },
-  unitBtnTextActive: { color: theme.colors.white },
-  frequencyRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  freqBtn: { flex: 1, paddingVertical: 8, backgroundColor: theme.colors.bg3, borderRadius: 8, alignItems: "center" },
-  freqBtnActive: { backgroundColor: theme.colors.pinkAccent },
-  freqBtnText: { fontSize: 12, fontWeight: "600", color: theme.colors.textPrimary },
-  freqBtnTextActive: { color: theme.colors.white },
-  formButtons: { flexDirection: "row", gap: 8, marginTop: 16 },
-  cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.colors.bg2, alignItems: "center" },
-  cancelBtnText: { fontSize: 14, fontWeight: "700", color: theme.colors.textSecondary },
-  spacer: { height: 20 },
-});
+function createHrtStyles(theme) {
+  return StyleSheet.create({
+    centerContent: { flex: 1, justifyContent: "center", alignItems: "center", gap: 16 },
+    loadingText: { color: theme.colors.textSecondary, fontSize: 14 },
+    header: { marginBottom: 8, gap: 4 },
+    title: { fontSize: 30, fontWeight: "700", color: theme.colors.textPrimary },
+    subtitle: { color: theme.colors.textSecondary, fontSize: 14 },
+    messageCard: { padding: 12, borderRadius: 12, marginBottom: 12 },
+    successCard: { backgroundColor: "#E8F5E9", borderColor: "#4CAF50" },
+    errorCard: { backgroundColor: "#FFEBEE", borderColor: "#F44336" },
+    messageText: { fontSize: 14, color: theme.colors.textPrimary, fontWeight: "600" },
+    medCard: { marginBottom: 12 },
+    medHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 },
+    medInfo: { flex: 1 },
+    medName: { fontSize: 16, fontWeight: "700", color: theme.colors.textPrimary, marginBottom: 6 },
+    dosage: { fontSize: 13, color: theme.colors.textSecondary, marginBottom: 4 },
+    nextDose: { fontSize: 12, color: theme.colors.pinkAccent, fontWeight: "600", marginBottom: 10 },
+    timerRow: { marginBottom: 10, padding: 8, backgroundColor: "rgba(232, 164, 176, 0.1)", borderRadius: 8 },
+    timerText: { fontSize: 13, color: theme.colors.pinkAccent, fontWeight: "600" },
+    removeBtn: { fontSize: 20, color: theme.colors.textTertiary, fontWeight: "600" },
+    noTakes: { fontSize: 13, color: theme.colors.textTertiary, fontStyle: "italic", marginBottom: 12 },
+    takeCard: { marginBottom: 8, padding: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    takeTime: { fontSize: 13, fontWeight: "700", color: theme.colors.pinkAccent },
+    takeMed: { fontSize: 12, color: theme.colors.textSecondary },
+    takeDose: { fontSize: 12, color: theme.colors.textTertiary },
+    formCard: { padding: 16, marginBottom: 12 },
+    fieldLabel: { fontSize: 12, fontWeight: "700", color: theme.colors.textSecondary, marginTop: 12, marginBottom: 8, textTransform: "uppercase" },
+    drugSelector: { marginBottom: 12, marginHorizontal: -16, paddingHorizontal: 16 },
+    drugPill: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: theme.colors.bg3, marginRight: 8 },
+    drugPillSelected: { backgroundColor: theme.colors.pinkAccent },
+    drugPillText: { fontSize: 12, color: theme.colors.textPrimary, fontWeight: "600" },
+    drugPillTextSelected: { color: theme.colors.white },
+    doseRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
+    doseInput: { flex: 1, height: 40 },
+    unitSelector: { flexDirection: "row", gap: 4 },
+    unitBtn: { paddingHorizontal: 10, paddingVertical: 8, backgroundColor: theme.colors.bg3, borderRadius: 8 },
+    unitBtnActive: { backgroundColor: theme.colors.pinkAccent },
+    unitBtnText: { fontSize: 11, fontWeight: "600", color: theme.colors.textPrimary },
+    unitBtnTextActive: { color: theme.colors.white },
+    frequencyRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
+    freqBtn: { flex: 1, paddingVertical: 8, backgroundColor: theme.colors.bg3, borderRadius: 8, alignItems: "center" },
+    freqBtnActive: { backgroundColor: theme.colors.pinkAccent },
+    freqBtnText: { fontSize: 12, fontWeight: "600", color: theme.colors.textPrimary },
+    freqBtnTextActive: { color: theme.colors.white },
+    formButtons: { flexDirection: "row", gap: 8, marginTop: 16 },
+    cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: theme.colors.bg2, alignItems: "center" },
+    cancelBtnText: { fontSize: 14, fontWeight: "700", color: theme.colors.textSecondary },
+    spacer: { height: 20 },
+  });
+}

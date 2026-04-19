@@ -3,9 +3,10 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { getBloodTests } from "../api/client";
 import { Card, EmptyState, Screen, SectionLabel } from "../components";
 import { formatShortDate } from "../utils";
-import { theme } from "../theme";
+import { useTheme } from "../hooks/useTheme";
 
 export function AnalyticsScreen({ session }) {
+  const theme = useTheme();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,6 +15,8 @@ export function AnalyticsScreen({ session }) {
       .then(setRows)
       .finally(() => setLoading(false));
   }, []);
+
+  const styles = createAnalyticsStyles(theme);
 
   return (
     <Screen>
@@ -35,9 +38,9 @@ export function AnalyticsScreen({ session }) {
             </View>
             <SectionLabel>Valores</SectionLabel>
             <View style={styles.metrics}>
-              <Metric label="E2" value={row.estradiol_pg_ml ? `${row.estradiol_pg_ml} pg/mL` : "-"} />
-              <Metric label="T" value={row.testosterone_ng_dl ? `${row.testosterone_ng_dl} ng/dL` : "-"} />
-              <Metric label="P4" value={row.progesterone_ng_ml ? `${row.progesterone_ng_ml} ng/mL` : "-"} />
+              <Metric label="E2" value={row.estradiol_pg_ml ? `${row.estradiol_pg_ml} pg/mL` : "-"} metricStyles={styles} />
+              <Metric label="T" value={row.testosterone_ng_dl ? `${row.testosterone_ng_dl} ng/dL` : "-"} metricStyles={styles} />
+              <Metric label="P4" value={row.progesterone_ng_ml ? `${row.progesterone_ng_ml} ng/mL` : "-"} metricStyles={styles} />
             </View>
           </Card>
         ))
@@ -46,59 +49,61 @@ export function AnalyticsScreen({ session }) {
   );
 }
 
-function Metric({ label, value }) {
+function Metric({ label, value, metricStyles }) {
   return (
-    <View style={styles.metric}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>{value}</Text>
+    <View style={metricStyles.metric}>
+      <Text style={metricStyles.metricLabel}>{label}</Text>
+      <Text style={metricStyles.metricValue}>{value}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    gap: 4,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "700",
-    color: theme.colors.textPrimary,
-  },
-  subtitle: {
-    color: theme.colors.textSecondary,
-  },
-  labCard: {
-    gap: 12,
-  },
-  labHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  labDate: {
-    fontWeight: "700",
-    color: theme.colors.textPrimary,
-  },
-  labName: {
-    color: theme.colors.textTertiary,
-  },
-  metrics: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  metric: {
-    flex: 1,
-    backgroundColor: theme.colors.bg,
-    borderRadius: theme.radius.sm,
-    padding: 12,
-  },
-  metricLabel: {
-    color: theme.colors.textTertiary,
-    fontSize: 11,
-    marginBottom: 4,
-  },
-  metricValue: {
-    color: theme.colors.textPrimary,
-    fontWeight: "600",
-  },
-});
+function createAnalyticsStyles(theme) {
+  return StyleSheet.create({
+    header: {
+      gap: 4,
+    },
+    title: {
+      fontSize: 30,
+      fontWeight: "700",
+      color: theme.colors.textPrimary,
+    },
+    subtitle: {
+      color: theme.colors.textSecondary,
+    },
+    labCard: {
+      gap: 12,
+    },
+    labHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    labDate: {
+      fontWeight: "700",
+      color: theme.colors.textPrimary,
+    },
+    labName: {
+      color: theme.colors.textTertiary,
+    },
+    metrics: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    metric: {
+      flex: 1,
+      backgroundColor: theme.colors.bg,
+      borderRadius: theme.radius.sm,
+      padding: 12,
+    },
+    metricLabel: {
+      color: theme.colors.textTertiary,
+      fontSize: 11,
+      marginBottom: 4,
+    },
+    metricValue: {
+      color: theme.colors.textPrimary,
+      fontWeight: "600",
+    },
+  });
+}

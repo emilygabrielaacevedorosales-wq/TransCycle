@@ -3,9 +3,10 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { getDiaryEntries, saveDiaryEntry } from "../api/client";
 import { AppTextInput, Card, EmptyState, PrimaryButton, Screen, SectionLabel } from "../components";
 import { formatShortDate } from "../utils";
-import { theme } from "../theme";
+import { useTheme } from "../hooks/useTheme";
 
 export function DiaryScreen({ session }) {
+  const theme = useTheme();
   const [wellbeingScore, setWellbeingScore] = useState("8");
   const [bodyChanges, setBodyChanges] = useState("");
   const [emotionalNotes, setEmotionalNotes] = useState("");
@@ -48,6 +49,8 @@ export function DiaryScreen({ session }) {
       setSaving(false);
     }
   }
+
+  const styles = createDiaryStyles(theme);
 
   return (
     <Screen>
@@ -106,50 +109,52 @@ export function DiaryScreen({ session }) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    gap: 4,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "700",
-    color: theme.colors.textPrimary,
-  },
-  subtitle: {
-    color: theme.colors.textSecondary,
-  },
-  formCard: {
-    gap: 12,
-  },
-  textArea: {
-    minHeight: 110,
-    textAlignVertical: "top",
-    paddingTop: 14,
-  },
-  message: {
-    color: theme.colors.pinkAccent,
-    fontWeight: "600",
-  },
-  entryCard: {
-    gap: 8,
-  },
-  entryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  entryDate: {
-    fontWeight: "700",
-    color: theme.colors.textPrimary,
-  },
-  entryMeta: {
-    color: theme.colors.textTertiary,
-  },
-  entryScore: {
-    color: theme.colors.pinkAccent,
-    fontWeight: "600",
-  },
-  entryText: {
-    color: theme.colors.textSecondary,
-    lineHeight: 20,
-  },
-});
+function createDiaryStyles(theme) {
+  return StyleSheet.create({
+    header: {
+      gap: 4,
+    },
+    title: {
+      fontSize: 30,
+      fontWeight: "700",
+      color: theme.colors.textPrimary,
+    },
+    subtitle: {
+      color: theme.colors.textSecondary,
+    },
+    formCard: {
+      gap: 12,
+    },
+    textArea: {
+      minHeight: 110,
+      textAlignVertical: "top",
+      paddingTop: 14,
+    },
+    message: {
+      color: theme.colors.pinkAccent,
+      fontWeight: "600",
+    },
+    entryCard: {
+      gap: 8,
+    },
+    entryHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    entryDate: {
+      fontWeight: "700",
+      color: theme.colors.textPrimary,
+    },
+    entryMeta: {
+      color: theme.colors.textTertiary,
+    },
+    entryScore: {
+      color: theme.colors.pinkAccent,
+      fontWeight: "600",
+    },
+    entryText: {
+      color: theme.colors.textSecondary,
+      lineHeight: 20,
+    },
+  });
+}
