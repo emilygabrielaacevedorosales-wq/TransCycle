@@ -14,7 +14,11 @@
       "Bash(npx expo *)",
       "PowerShell(Get-Command *)",
       "PowerShell(cd \"C:\\\\Users\\\\catag\\\\Desktop\\\\TransCycle & Health\\\\transcycle_COMPLETO_claude_code\\\\transcycle\\\\expo-app\"; Get-ChildItem -Path \"node_modules\" | Where-Object { $_.Name -eq \"expo\" } | Select-Object Name)",
-      "Bash(npm rebuild *)"
+      "Bash(npm rebuild *)",
+      "PowerShell(npm *)",
+      "Bash(npm ls *)",
+      "Bash(rm -rf node_modules package-lock.json .npm)",
+      "Bash(npm cache *)"
     ]
   }
 }
