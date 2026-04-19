@@ -17,6 +17,10 @@ import { analyticsRouter, diaryRouter } from "./routes/analyticsAndDiary";
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
 
 // ── Seguridad ─────────────────────────────────────
 
@@ -32,7 +36,20 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: (process.env.ALLOWED_ORIGINS ?? "").split(",").filter(Boolean),
+  origin: (origin, callback) => {
+    // React Native / Expo Go often sends no browser Origin header.
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("Origen no permitido por CORS"));
+  },
   credentials: true,
 }));
 

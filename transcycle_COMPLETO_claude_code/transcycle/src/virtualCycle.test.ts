@@ -39,7 +39,9 @@ function test(name: string, fn: () => void) {
 
 // ─── Helpers ─────────────────────────────────
 
+
 const anchor = new Date("2025-01-01T08:00:00Z");
+const anchor = new Date("2026-01-01T08:00:00Z");
 
 function makeDoseEvents(
   drugKey: DoseEvent["drugKey"],

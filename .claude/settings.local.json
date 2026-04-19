@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf node_modules package-lock.json)",
+      "Bash(npm install *)",
+      "Bash(netstat -ano)",
+      "Bash(grep -q \"added.*packages\\\\|up to date\" \"C:\\\\Users\\\\catag\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-catag-Desktop-TransCycle---Health\\\\16babfdd-e31a-4c27-b3aa-6837cc7cfeb9\\\\tasks\\\\bxdc1u30a.output\")",
+      "Bash(node seed-firebase.js)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(timeout 180 bash -c 'while true; do tail -1 \"C:\\\\Users\\\\catag\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-catag-Desktop-TransCycle---Health\\\\16babfdd-e31a-4c27-b3aa-6837cc7cfeb9\\\\tasks\\\\bemyy1vnd.output\" 2>/dev/null | grep -q \"Ready on\\\\|Press\\\\|error\\\\|Error\" && break; sleep 3; done')",
+      "Bash(curl -s http://localhost:8081/)",
+      "Bash(grep -q \"added.*packages\\\\|up to date\" \"C:\\\\Users\\\\catag\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-catag-Desktop-TransCycle---Health\\\\16babfdd-e31a-4c27-b3aa-6837cc7cfeb9\\\\tasks\\\\bm20ejwef.output\")",
+      "Bash(node generate-qr.js)",
+      "Bash(npx expo *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(cd \"C:\\\\Users\\\\catag\\\\Desktop\\\\TransCycle & Health\\\\transcycle_COMPLETO_claude_code\\\\transcycle\\\\expo-app\"; Get-ChildItem -Path \"node_modules\" | Where-Object { $_.Name -eq \"expo\" } | Select-Object Name)",
+      "Bash(npm rebuild *)"
+    ]
+  }
+}

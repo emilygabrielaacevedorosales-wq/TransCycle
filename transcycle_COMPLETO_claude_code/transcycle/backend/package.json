@@ -4,10 +4,10 @@
   "description": "TransCycle & Health — API REST",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "node ./node_modules/ts-node-dev/lib/bin.js --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' npx ts-node tests/api.test.ts",
+    "test": "node ./node_modules/ts-node/dist/bin.js tests/api.test.ts",
     "db:migrate": "psql $DATABASE_URL -f ../db/001_initial_schema.sql"
   },
   "dependencies": {
