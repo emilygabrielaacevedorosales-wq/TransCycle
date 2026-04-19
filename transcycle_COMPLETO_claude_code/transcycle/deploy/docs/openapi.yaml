@@ -1,0 +1,426 @@
+openapi: 3.0.3
+info:
+  title: TransCycle & Health API
+  version: 1.0.0
+  description: |
+    API REST para la app de seguimiento hormonal TransCycle.
+    Todos los endpoints protegidos requieren Bearer JWT en el header Authorization.
+    Los datos sensibles se cifran AES-256-GCM antes de persistir.
+
+servers:
+  - url: http://localhost:3000
+    description: Desarrollo local
+  - url: https://api.transcycle.app
+    description: Producción
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+
+    Token:
+      type: object
+      properties:
+        token: { type: string }
+        userId: { type: string, format: uuid }
+
+    DrugProfile:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        drug_key:         { type: string, example: "E2_SUBLINGUAL" }
+        display_name:     { type: string, example: "Estradiol sublingual" }
+        category:         { type: string, enum: [estrogen, progestogen, antiandrogen] }
+        route:            { type: string, enum: [sublingual, intramuscular, transdermal_patch, rectal, oral] }
+        half_life_hours:  { type: number, example: 3.0 }
+        peak_hours:       { type: number, example: 0.75 }
+        notes:            { type: string }
+
+    PlasmaPoint:
+      type: object
+      properties:
+        calculated_at:   { type: string, format: date-time }
+        level_value:     { type: number, example: 187.4 }
+        level_unit:      { type: string, example: "pg_ml" }
+        drug_key:        { type: string }
+        display_name:    { type: string }
+
+    CycleStatus:
+      type: object
+      properties:
+        currentDay:           { type: integer, minimum: 1, maximum: 28 }
+        phase:                { type: string }
+        phaseDescription:     { type: string }
+        daysUntilGhostPeriod: { type: integer, nullable: true }
+        compositeScore:       { type: integer, minimum: 0, maximum: 100 }
+        e2Trend:              { type: string, enum: [rising, falling, stable] }
+        p4Trend:              { type: string, enum: [rising, falling, stable] }
+        confidenceScore:      { type: number, minimum: 0, maximum: 1 }
+
+    SymptomEntry:
+      type: object
+      required: [loggedAt, moodScore, breastTenderness, fatigueLevel,
+                 digestiveChanges, libidoScore, skinChanges, brainFog, emotionalLability]
+      properties:
+        loggedAt:          { type: string, format: date-time }
+        moodScore:         { type: integer, minimum: 1, maximum: 10 }
+        breastTenderness:  { type: integer, minimum: 1, maximum: 10 }
+        fatigueLevel:      { type: integer, minimum: 1, maximum: 10 }
+        digestiveChanges:  { type: integer, minimum: 1, maximum: 10 }
+        libidoScore:       { type: integer, minimum: 1, maximum: 10 }
+        skinChanges:       { type: integer, minimum: 1, maximum: 10 }
+        brainFog:          { type: integer, minimum: 1, maximum: 10 }
+        emotionalLability: { type: integer, minimum: 1, maximum: 10 }
+        freetext:          { type: string, maxLength: 2000 }
+
+paths:
+
+  # ── AUTH ──────────────────────────────────────────────
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar nueva usuaria
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, displayName]
+              properties:
+                email:       { type: string, format: email }
+                password:    { type: string, minLength: 8 }
+                displayName: { type: string }
+                pronouns:    { type: string }
+                timezone:    { type: string, default: "America/Santiago" }
+      responses:
+        '201': { description: Registrada, content: { application/json: { schema: { $ref: '#/components/schemas/Token' } } } }
+        '409': { description: Email ya registrado }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:    { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Token' } } } }
+        '401': { description: Credenciales incorrectas }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Perfil de la usuaria autenticada
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Perfil de usuaria }
+
+  /auth/discrete-mode:
+    patch:
+      tags: [Auth]
+      summary: Activar / desactivar modo discreto
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled: { type: boolean }
+                appName: { type: string, example: "Mi Calendario" }
+                iconKey: { type: string }
+      responses:
+        '200': { description: OK }
+
+  # ── HRT ───────────────────────────────────────────────
+
+  /hrt/drugs:
+    get:
+      tags: [TRH]
+      summary: Catálogo de fármacos disponibles
+      responses:
+        '200':
+          description: Lista de perfiles farmacocinéticos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DrugProfile' }
+
+  /hrt/medications:
+    get:
+      tags: [TRH]
+      summary: Medicamentos activos de la usuaria
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Lista de medicamentos }
+    post:
+      tags: [TRH]
+      summary: Agregar medicamento al régimen
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [drugProfileId, doseAmount, frequencyHours, startDate]
+              properties:
+                drugProfileId:       { type: string, format: uuid }
+                doseAmount:          { type: number, example: 1.0 }
+                doseUnit:            { type: string, default: "mg" }
+                frequencyHours:      { type: number, example: 8 }
+                preferredTimes:      { type: array, items: { type: string }, example: ["08:00","16:00","00:00"] }
+                stockUnits:          { type: number, default: 0 }
+                stockAlertThreshold: { type: number, default: 7 }
+                startDate:           { type: string, format: date-time }
+                notes:               { type: string }
+      responses:
+        '201': { description: Medicamento agregado }
+
+  /hrt/log:
+    get:
+      tags: [TRH]
+      summary: Historial de tomas
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, maximum: 200 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+      responses:
+        '200': { description: Lista de administraciones }
+    post:
+      tags: [TRH]
+      summary: Registrar toma/inyección
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [medicationId, administeredAt, actualDose]
+              properties:
+                medicationId:   { type: string, format: uuid }
+                administeredAt: { type: string, format: date-time }
+                actualDose:     { type: number, example: 1.0 }
+                bodySite:       { type: string, example: "glut_left" }
+                notes:          { type: string }
+      responses:
+        '201': { description: Toma registrada. Curva plasmática calculada automáticamente. }
+
+  /hrt/body-map:
+    get:
+      tags: [TRH]
+      summary: Mapa corporal de sitios de inyección/parche
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Sitios con estado (disponible/en descanso) }
+
+  /hrt/body-map/next-site/{medId}:
+    get:
+      tags: [TRH]
+      summary: Siguiente sitio recomendado para rotación
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: medId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Sitio recomendado }
+        '404': { description: Todos los sitios en descanso }
+
+  /hrt/stock-alerts:
+    get:
+      tags: [TRH]
+      summary: Medicamentos con stock bajo
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Lista de alertas de stock }
+
+  # ── CYCLE ─────────────────────────────────────────────
+
+  /cycle/current:
+    get:
+      tags: [Ciclo virtual]
+      summary: Estado del ciclo hoy
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Estado actual del ciclo virtual
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CycleStatus' }
+
+  /cycle/rebuild:
+    post:
+      tags: [Ciclo virtual]
+      summary: Recalcular ciclo virtual con datos actuales
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Ciclo recalculado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:              { type: boolean }
+                  confidenceScore: { type: number }
+                  ghostPeriod:     { type: object }
+                  insights:        { type: array, items: { type: string } }
+
+  /cycle/symptoms:
+    get:
+      tags: [Ciclo virtual]
+      summary: Historial de síntomas
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 30, maximum: 90 }
+      responses:
+        '200': { description: Lista de entradas de síntomas }
+    post:
+      tags: [Ciclo virtual]
+      summary: Registrar síntomas del día
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SymptomEntry' }
+      responses:
+        '201': { description: Síntomas guardados }
+
+  /cycle/plasma:
+    get:
+      tags: [Ciclo virtual]
+      summary: Curva plasmática calculada
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: days
+          schema: { type: integer, default: 14, maximum: 90 }
+      responses:
+        '200':
+          description: Serie temporal de niveles plasmáticos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PlasmaPoint' }
+
+  /cycle/dashboard-ring:
+    get:
+      tags: [Ciclo virtual]
+      summary: Datos para el anillo del dashboard (28 puntos)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Ring data + estado actual }
+
+  # ── ANALYTICS ─────────────────────────────────────────
+
+  /analytics/blood-tests:
+    get:
+      tags: [Analíticas]
+      summary: Historial de exámenes de sangre
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Lista de exámenes }
+    post:
+      tags: [Analíticas]
+      summary: Cargar resultado de examen
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [testDate]
+              properties:
+                testDate:          { type: string, format: date-time }
+                labName:           { type: string }
+                estradiolPgMl:     { type: number }
+                testosteroneNgDl:  { type: number }
+                prolactinNgMl:     { type: number }
+                lhMiuMl:           { type: number }
+                fshMiuMl:          { type: number }
+                progesteroneNgMl:  { type: number }
+                hoursSinceLastDose:{ type: number }
+                labNotes:          { type: string }
+      responses:
+        '201': { description: Examen guardado }
+
+  /analytics/trends:
+    get:
+      tags: [Analíticas]
+      summary: Tendencias E2/T/P4 vs dosis por ciclo
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Serie de tendencias hormonales }
+
+  # ── DIARY ─────────────────────────────────────────────
+
+  /diary:
+    get:
+      tags: [Diario]
+      summary: Entradas recientes del diario
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Lista de entradas (contenido descifrado) }
+    post:
+      tags: [Diario]
+      summary: Crear / actualizar entrada del día
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entryDate, wellbeingScore]
+              properties:
+                entryDate:      { type: string, pattern: '^\d{4}-\d{2}-\d{2}$' }
+                wellbeingScore: { type: integer, minimum: 1, maximum: 10 }
+                bodyChanges:    { type: string, maxLength: 5000 }
+                emotionalNotes: { type: string, maxLength: 5000 }
+                photoUrls:      { type: array, items: { type: string, format: uri } }
+      responses:
+        '201': { description: Entrada guardada y cifrada }
+
+  /diary/{date}:
+    get:
+      tags: [Diario]
+      summary: Entrada de una fecha específica
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: date
+          required: true
+          schema: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$', example: "2025-01-15" }
+      responses:
+        '200': { description: Entrada descifrada }
+        '404': { description: Sin entrada para esa fecha }

@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TransCycle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #FAF8F5;
+  --bg2:       #F2EFE9;
+  --bg3:       #E8E3DA;
+  --text:      #1C1A17;
+  --text2:     #6B6459;
+  --text3:     #A09890;
+  --pink:      #E8A4B0;
+  --pink-d:    #C4728A;
+  --lavender:  #B8AED4;
+  --lav-d:     #7B6FA8;
+  --teal:      #8BBFB8;
+  --teal-d:    #4A8B84;
+  --amber:     #D4A96A;
+  --amber-d:   #A67840;
+  --ghost:     #E88C8C;
+  --ghost-d:   #C05050;
+  --border:    rgba(28,26,23,0.08);
+  --shadow:    0 2px 20px rgba(28,26,23,0.06);
+  --r:         16px;
+  --r-sm:      10px;
+  --serif:     'DM Serif Display', Georgia, serif;
+  --sans:      'DM Sans', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Layout ── */
+.app {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  grid-template-rows: 1fr;
+  min-height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Sidebar nav ── */
+.nav {
+  width: 72px;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.nav-logo {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--pink-d);
+  writing-mode: vertical-rl;
+  letter-spacing: 0.12em;
+  margin-bottom: 16px;
+  opacity: 0.85;
+}
+
+.nav-btn {
+  width: 44px; height: 44px;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+  color: var(--text3);
+  font-size: 18px;
+  position: relative;
+}
+.nav-btn:hover { background: var(--bg3); color: var(--text2); }
+.nav-btn.active { background: var(--bg2); color: var(--pink-d); }
+.nav-btn svg { width: 20px; height: 20px; }
+
+/* ── Main ── */
+.main {
+  padding: 32px 36px;
+  overflow-y: auto;
+}
+
+/* ── Screens ── */
+.screen { display: none; animation: fadeIn 0.25s ease; }
+.screen.visible { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Page header ── */
+.page-header { margin-bottom: 28px; }
+.page-title {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.page-sub { font-size: 13px; color: var(--text3); margin-top: 4px; font-weight: 300; }
+
+/* ── Dashboard: hero ring area ── */
+.dashboard-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 32px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.ring-wrap {
+  position: relative;
+  width: 240px; height: 240px;
+  flex-shrink: 0;
+}
+.ring-canvas { position: absolute; inset: 0; }
+.ring-center {
+  position: absolute;
+  inset: 32px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.ring-day {
+  font-family: var(--serif);
+  font-size: 48px;
+  line-height: 1;
+  color: var(--text);
+}
+.ring-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  font-weight: 400;
+}
+.ring-phase {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 4px;
+  font-weight: 300;
+}
+
+/* ── Hero right panel ── */
+.hero-info { display: flex; flex-direction: column; gap: 14px; }
+
+.phase-card {
+  background: var(--bg2);
+  border-radius: var(--r);
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+}
+.phase-card-name {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+.phase-card-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.mini-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.mini-stat {
+  background: var(--bg2);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+}
+.mini-stat-val {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.mini-stat-lbl { font-size: 10px; color: var(--text3); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* ── Ghost period banner ── */
+.ghost-banner {
+  background: linear-gradient(135deg, #FAF0F0, #FDF5F0);
+  border: 1px solid rgba(232,140,140,0.3);
+  border-radius: var(--r);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.ghost-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--ghost);
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.6; transform:scale(1.3); } }
+.ghost-text { font-size: 13px; color: var(--text2); font-weight: 300; }
+.ghost-text strong { color: var(--ghost-d); font-weight: 500; }
+
+/* ── Hormone curve ── */
+.section-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+
+.curve-wrap {
+  background: var(--bg2);
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.curve-wrap canvas { width: 100%; display: block; }
+
+/* ── Insights ── */
+.insights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.insight-card {
+  background: var(--bg2);
+  border-radius: var(--r-sm);
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+  font-weight: 300;
+}
+.insight-card::before {
+  content: attr(data-icon);
+  display: block;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+/* ── Symptom log screen ── */
+.symptom-form {
+  background: var(--bg2);
+  border-radius: var(--r);
+  padding: 24px;
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.sliders-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+  margin-top: 16px;
+}
+.slider-row { display: flex; flex-direction: column; gap: 6px; }
+.slider-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.slider-name { font-size: 12px; color: var(--text2); font-weight: 400; }
+.slider-val {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 20px;
+  text-align: right;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg3);
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--pink-d);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.btn-primary {
+  background: var(--pink-d);
+  color: white;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 10px 22px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary:active { transform: scale(0.97); }
+
+.symptom-history { display: flex; flex-direction: column; gap: 10px; }
+.symptom-entry {
+  background: var(--bg2);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.sym-date { font-size: 11px; color: var(--text3); min-width: 70px; font-weight: 400; }
+.sym-bars { display: flex; gap: 3px; align-items: flex-end; }
+.sym-bar {
+  width: 6px;
+  border-radius: 2px;
+  background: var(--pink);
+  transition: height 0.3s ease;
+}
+.sym-day-label { font-size: 11px; color: var(--text2); margin-left: 8px; }
+
+/* ── HRT log screen ── */
+.drug-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.drug-card {
+  background: var(--bg2);
+  border-radius: var(--r);
+  padding: 18px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+.drug-card:hover { border-color: var(--pink); transform: translateY(-1px); }
+.drug-card.selected { border-color: var(--pink-d); background: #FDF5F7; }
+.drug-card-name { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.drug-card-route {
+  font-size: 11px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 400;
+}
+.drug-card-t12 { font-size: 12px; color: var(--text2); margin-top: 8px; font-weight: 300; }
+.drug-card-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 0 0 var(--r) var(--r);
+}
+
+.dose-log-panel {
+  background: var(--bg2);
+  border-radius: var(--r);
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.dose-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.dose-row:last-child { border-bottom: none; }
+.dose-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dose-time { font-size: 12px; color: var(--text3); min-width: 100px; font-weight: 400; }
+.dose-drug { font-size: 13px; font-weight: 400; }
+.dose-amount { font-size: 12px; color: var(--text2); margin-left: auto; font-weight: 300; }
+
+/* ── Analytics screen ── */
+.analytics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.analytic-card {
+  background: var(--bg2);
+  border-radius: var(--r-sm);
+  padding: 16px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.analytic-val { font-size: 26px; font-weight: 300; letter-spacing: -0.02em; }
+.analytic-unit { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
+.analytic-lbl { font-size: 11px; color: var(--text2); margin-top: 6px; font-weight: 400; }
+
+/* ── Diary screen ── */
+.diary-entry-form {
+  background: var(--bg2);
+  border-radius: var(--r);
+  padding: 24px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.diary-textarea {
+  width: 100%;
+  min-height: 100px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text);
+  resize: vertical;
+  margin-top: 8px;
+  font-weight: 300;
+  line-height: 1.7;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.diary-textarea:focus { border-color: var(--pink); }
+.diary-textarea::placeholder { color: var(--text3); }
+
+.diary-entries { display: flex; flex-direction: column; gap: 12px; }
+.diary-card {
+  background: var(--bg2);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+}
+.diary-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.diary-card-date { font-size: 12px; color: var(--text3); font-weight: 400; }
+.diary-card-phase {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: var(--bg3);
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 400;
+}
+.diary-card-text { font-size: 13px; color: var(--text2); line-height: 1.7; font-weight: 300; }
+.wellbeing-dots { display: flex; gap: 3px; margin-top: 10px; }
+.wellbeing-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--bg3);
+}
+.wellbeing-dot.filled { background: var(--pink); }
+
+/* ── Discrete mode toggle ── */
+.discrete-banner {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: var(--r-sm);
+  padding: 10px 16px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  z-index: 100;
+  transition: opacity 0.2s;
+  font-weight: 300;
+}
+.discrete-banner:hover { opacity: 0.85; }
+.discrete-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ghost); flex-shrink: 0; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--text);
+  color: var(--bg);
+  padding: 10px 20px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  z-index: 200;
+}
+.toast.show { opacity: 1; }
+
+/* ── Correlation badges ── */
+.correlation-list { display: flex; flex-direction: column; gap: 8px; }
+.corr-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg2);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+}
+.corr-name { font-size: 12px; color: var(--text2); flex: 1; font-weight: 400; }
+.corr-bar-wrap { width: 80px; height: 4px; background: var(--bg3); border-radius: 2px; }
+.corr-bar { height: 4px; border-radius: 2px; transition: width 0.5s ease; }
+.corr-val { font-size: 11px; color: var(--text3); min-width: 36px; text-align: right; font-weight: 400; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Sidebar -->
+  <nav class="nav">
+    <div class="nav-logo">TC</div>
+    <button class="nav-btn active" data-screen="dashboard" title="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    </button>
+    <button class="nav-btn" data-screen="symptoms" title="Síntomas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9M16.376 3.622a1 1 0 011.36-.483l1.5.694a1 1 0 01.483 1.36l-9.5 20.5a1 1 0 01-1.36.483l-1.5-.694a1 1 0 01-.483-1.36z"/></svg>
+    </button>
+    <button class="nav-btn" data-screen="hrt" title="TRH">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+    </button>
+    <button class="nav-btn" data-screen="analytics" title="Analíticas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </button>
+    <button class="nav-btn" data-screen="diary" title="Diario">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    </button>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- ── DASHBOARD ── -->
+    <section class="screen visible" id="screen-dashboard">
+      <div class="page-header">
+        <h1 class="page-title" id="dash-greeting">Buenos días</h1>
+        <p class="page-sub" id="dash-date">Cargando...</p>
+      </div>
+
+      <div id="ghost-banner" class="ghost-banner" style="display:none">
+        <div class="ghost-dot"></div>
+        <p class="ghost-text" id="ghost-text"></p>
+      </div>
+
+      <div class="dashboard-hero">
+        <div class="ring-wrap">
+          <canvas class="ring-canvas" id="ring-canvas" width="240" height="240"></canvas>
+          <div class="ring-center">
+            <div class="ring-day" id="ring-day">—</div>
+            <div class="ring-label">día del ciclo</div>
+            <div class="ring-phase" id="ring-phase-mini">—</div>
+          </div>
+        </div>
+        <div class="hero-info">
+          <div class="phase-card">
+            <div class="phase-card-name" id="phase-name">—</div>
+            <div class="phase-card-desc" id="phase-desc">Calculando tu ciclo virtual...</div>
+          </div>
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <div class="mini-stat-val" id="stat-e2">—</div>
+              <div class="mini-stat-lbl">E2 estimado pg/mL</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val" id="stat-p4">—</div>
+              <div class="mini-stat-lbl">P4 estimada ng/mL</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val" id="stat-days-ghost">—</div>
+              <div class="mini-stat-lbl">días hasta período</div>
+            </div>
+            <div class="mini-stat">
+              <div class="mini-stat-val" id="stat-confidence">—</div>
+              <div class="mini-stat-lbl">confianza del modelo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-title">Curva hormonal — últimas 48h</p>
+      <div class="curve-wrap">
+        <canvas id="curve-canvas" height="120"></canvas>
+      </div>
+
+      <p class="section-title">Correlaciones sintomáticas</p>
+      <div class="correlation-list" id="corr-list"></div>
+    </section>
+
+    <!-- ── SÍNTOMAS ── -->
+    <section class="screen" id="screen-symptoms">
+      <div class="page-header">
+        <h1 class="page-title">Registro de síntomas</h1>
+        <p class="page-sub">¿Cómo te sientes hoy?</p>
+      </div>
+
+      <div class="symptom-form">
+        <div class="sliders-grid" id="sliders-grid"></div>
+        <button class="btn-primary" id="btn-save-symptoms">Guardar registro</button>
+      </div>
+
+      <p class="section-title">Historial reciente</p>
+      <div class="symptom-history" id="symptom-history"></div>
+    </section>
+
+    <!-- ── TRH ── -->
+    <section class="screen" id="screen-hrt">
+      <div class="page-header">
+        <h1 class="page-title">Terapia hormonal</h1>
+        <p class="page-sub">Tu régimen actual</p>
+      </div>
+
+      <div class="drug-cards" id="drug-cards"></div>
+
+      <p class="section-title">Últimas tomas registradas</p>
+      <div class="dose-log-panel" id="dose-log"></div>
+    </section>
+
+    <!-- ── ANALÍTICAS ── -->
+    <section class="screen" id="screen-analytics">
+      <div class="page-header">
+        <h1 class="page-title">Analíticas</h1>
+        <p class="page-sub">Tendencias hormonales y niveles en sangre</p>
+      </div>
+
+      <div class="analytics-grid" id="analytics-grid"></div>
+
+      <p class="section-title">Evolución de E2 por ciclo</p>
+      <div class="curve-wrap">
+        <canvas id="analytics-canvas" height="140"></canvas>
+      </div>
+    </section>
+
+    <!-- ── DIARIO ── -->
+    <section class="screen" id="screen-diary">
+      <div class="page-header">
+        <h1 class="page-title">Diario de evolución</h1>
+        <p class="page-sub">Registro privado y cifrado</p>
+      </div>
+
+      <div class="diary-entry-form">
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">Bienestar general</span>
+            <span class="slider-val" id="wellbeing-val">7</span>
+          </div>
+          <input type="range" min="1" max="10" value="7" id="wellbeing-slider"
+            oninput="document.getElementById('wellbeing-val').textContent=this.value">
+        </div>
+        <textarea class="diary-textarea" id="diary-body" placeholder="¿Qué notaste hoy en tu cuerpo, energía o estado de ánimo?"></textarea>
+        <button class="btn-primary" id="btn-save-diary">Guardar entrada</button>
+      </div>
+
+      <p class="section-title">Entradas recientes</p>
+      <div class="diary-entries" id="diary-entries"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Discrete mode hint -->
+<div class="discrete-banner" id="discrete-btn">
+  <div class="discrete-dot"></div>
+  <span>Modo discreto</span>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// ALGORITMO FARMACOCINÉTICO (Bloque 1)
+// ══════════════════════════════════════════
+
+const DRUG_PROFILES = {
+  E2_SUBLINGUAL: {
+    key:"E2_SUBLINGUAL", displayName:"Estradiol sublingual",
+    category:"estrogen", halfLifeHours:3.0, peakHours:0.75,
+    cmaxPerMg:350, cmaxUnit:"pg_per_mg", color:"#E8A4B0", colorD:"#C4728A",
+  },
+  E2_VALERATE_IM: {
+    key:"E2_VALERATE_IM", displayName:"Valerato de estradiol IM",
+    category:"estrogen", halfLifeHours:96, peakHours:48,
+    cmaxPerMg:80, cmaxUnit:"pg_per_mg", color:"#B8AED4", colorD:"#7B6FA8",
+  },
+  E2_CYPIONATE_IM: {
+    key:"E2_CYPIONATE_IM", displayName:"Cipionato de estradiol IM",
+    category:"estrogen", halfLifeHours:168, peakHours:72,
+    cmaxPerMg:90, cmaxUnit:"pg_per_mg", color:"#B8AED4", colorD:"#7B6FA8",
+  },
+  E2_PATCH: {
+    key:"E2_PATCH", displayName:"Parche transdérmico",
+    category:"estrogen", halfLifeHours:18, peakHours:10,
+    cmaxPerMg:null, cmaxUnit:"pg_per_patch", color:"#8BBFB8", colorD:"#4A8B84",
+  },
+  P4_RECTAL: {
+    key:"P4_RECTAL", displayName:"Progesterona micronizada (rectal)",
+    category:"progestogen", halfLifeHours:20, peakHours:3.5,
+    cmaxPerMg:0.08, cmaxUnit:"ng_per_mg", color:"#D4A96A", colorD:"#A67840",
+  },
+  SPIRO: {
+    key:"SPIRO", displayName:"Espironolactona",
+    category:"antiandrogen", halfLifeHours:1.4, halfLifeSecondaryHours:16,
+    peakHours:2.5, cmaxPerMg:null, cmaxUnit:"suppression",
+    color:"#A8C4A0", colorD:"#5A8A50",
+  },
+};
+
+function singleDoseLevel(doseAmountMg, hoursSinceDose, profile) {
+  if (hoursSinceDose < 0) return 0;
+  const cMax = profile.cmaxUnit === "pg_per_patch"
+    ? 100 * doseAmountMg
+    : (profile.cmaxPerMg || 1) * doseAmountMg;
+  const ke = Math.LN2 / profile.halfLifeHours;
+  if (hoursSinceDose <= profile.peakHours) {
+    return cMax * (hoursSinceDose / profile.peakHours);
+  }
+  return cMax * Math.exp(-ke * (hoursSinceDose - profile.peakHours));
+}
+
+function totalLevelAt(doses, atTime, drugKey) {
+  const profile = DRUG_PROFILES[drugKey];
+  if (!profile) return 0;
+  return doses
+    .filter(d => d.drugKey === drugKey && d.administeredAt <= atTime)
+    .reduce((sum, dose) => {
+      const h = (atTime - dose.administeredAt) / 3600000;
+      if (h > 336) return sum;
+      return sum + singleDoseLevel(dose.doseAmountMg, h, profile);
+    }, 0);
+}
+
+function generateCurve(doses, drugKey, fromTime, hours, stepH = 2) {
+  const points = [];
+  for (let h = 0; h <= hours; h += stepH) {
+    const t = new Date(fromTime.getTime() + h * 3600000);
+    points.push({ h, t, v: Math.round(totalLevelAt(doses, t, drugKey) * 10) / 10 });
+  }
+  return points;
+}
+
+// ══════════════════════════════════════════
+// ESTADO DE LA APP (datos demo)
+// ══════════════════════════════════════════
+
+const now = new Date();
+
+// Régimen demo: estradiol sublingual 1mg c/8h + P4 200mg/noche
+const demoE2Doses = Array.from({length:84}, (_, i) => ({
+  administeredAt: new Date(now.getTime() - (83-i)*8*3600000),
+  doseAmountMg: 1,
+  drugKey: "E2_SUBLINGUAL",
+}));
+const demoP4Doses = Array.from({length:28}, (_, i) => ({
+  administeredAt: new Date(now.getTime() - (27-i)*24*3600000),
+  doseAmountMg: 200,
+  drugKey: "P4_RECTAL",
+}));
+const allDoses = [...demoE2Doses, ...demoP4Doses];
+
+// Ciclo virtual demo (día 18 del ciclo)
+const cycleAnchor = new Date(now.getTime() - 17*24*3600000);
+const cycleDay = 18;
+
+const PHASES = {
+  follicular_early: {
+    name:"Fase folicular temprana",
+    desc:"Los niveles de estradiol comienzan a ascender. Energía moderada, estado de ánimo estable.",
+    color:"#8BBFB8",
+  },
+  follicular_late: {
+    name:"Fase folicular tardía",
+    desc:"E2 en niveles altos. Suele ser la semana de mayor vitalidad y bienestar.",
+    color:"#B8AED4",
+  },
+  ovulation_virtual: {
+    name:"Ovulación virtual",
+    desc:"Pico máximo de E2 en el ciclo. Momento de mayor energía y conexión corporal.",
+    color:"#E8A4B0",
+  },
+  luteal_early: {
+    name:"Fase lútea temprana",
+    desc:"La progesterona comienza a ascender. Posible aumento de la sensibilidad mamaria.",
+    color:"#D4A96A",
+  },
+  luteal_late: {
+    name:"Fase lútea tardía",
+    desc:"P4 en su punto más alto. Mayor sensibilidad emocional y síntomas premenstruales virtuales.",
+    color:"#E8A4B0",
+  },
+  trough: {
+    name:"Valle del ciclo",
+    desc:"Mínimos hormonales. Pueden aparecer síntomas del período fantasma. La siguiente dosis restablecerá el equilibrio.",
+    color:"#E88C8C",
+  },
+};
+
+function getDayPhase(day) {
+  if (day <= 7)  return "follicular_early";
+  if (day <= 13) return "follicular_late";
+  if (day === 14) return "ovulation_virtual";
+  if (day <= 20) return "luteal_early";
+  if (day <= 26) return "luteal_late";
+  return "trough";
+}
+
+const currentPhase = getDayPhase(cycleDay);
+const ghostPeriod = { startDay:25, endDay:28, peakDay:27 };
+const daysUntilGhost = ghostPeriod.startDay - cycleDay;
+
+// Historial de síntomas demo
+let symptomHistory = [
+  { date:"Hace 3 días", cycleDay:15, vals:[7,4,5,3,6,4,3,5] },
+  { date:"Hace 2 días", cycleDay:16, vals:[6,5,6,4,5,4,4,6] },
+  { date:"Ayer",        cycleDay:17, vals:[7,6,5,3,7,5,3,5] },
+];
+
+const SYMPTOM_DEFS = [
+  { key:"mood",      label:"Estado de ánimo",    default:7 },
+  { key:"breast",    label:"Sensibilidad mamaria", default:4 },
+  { key:"fatigue",   label:"Fatiga",              default:4 },
+  { key:"digestive", label:"Cambios digestivos",  default:3 },
+  { key:"libido",    label:"Libido",              default:6 },
+  { key:"skin",      label:"Cambios en piel",     default:5 },
+  { key:"fog",       label:"Niebla mental",       default:3 },
+  { key:"emotional", label:"Labilidad emocional", default:5 },
+];
+
+// Exámenes de sangre demo
+const bloodTests = [
+  { label:"E2 último examen", val:"187", unit:"pg/mL", sub:"hace 3 semanas" },
+  { label:"Testosterona",     val:"18",  unit:"ng/dL",  sub:"suprimida ✓" },
+  { label:"Prolactina",       val:"12",  unit:"ng/mL",  sub:"rango normal" },
+  { label:"P4 último examen", val:"4.2", unit:"ng/mL",  sub:"hace 3 semanas" },
+  { label:"LH",               val:"2.1", unit:"mUI/mL", sub:"suprimida ✓" },
+  { label:"FSH",              val:"3.8", unit:"mUI/mL", sub:"rango normal" },
+];
+
+const correlations = [
+  { name:"Sensibilidad mamaria", corrE2:-0.62, corrP4:0.71, peak:24 },
+  { name:"Estado de ánimo",      corrE2:0.68,  corrP4:-0.31, peak:13 },
+  { name:"Fatiga",               corrE2:-0.44, corrP4:0.52,  peak:25 },
+  { name:"Labilidad emocional",  corrE2:-0.55, corrP4:0.48,  peak:26 },
+];
+
+const diaryEntries = [
+  { date:"Hace 2 días", phase:"Lútea temprana", text:"Noté más sensibilidad en el pecho. Día de mucha energía en el trabajo, pero al llegar a casa me sentí agotada.", wellbeing:7 },
+  { date:"Hace 1 semana", phase:"Folicular tardía", text:"Semana increíble. Me sentí completamente yo misma. La piel más suave, el humor muy estable.", wellbeing:9 },
+  { date:"Hace 2 semanas", phase:"Folicular temprana", text:"Empecé el nuevo ciclo. Valle notable ayer pero hoy ya se siente el ascenso.", wellbeing:6 },
+];
+
+// ══════════════════════════════════════════
+// RENDER: DASHBOARD
+// ══════════════════════════════════════════
+
+function initDashboard() {
+  // Fecha y saludo
+  const h = now.getHours();
+  const greet = h < 13 ? "Buenos días" : h < 20 ? "Buenas tardes" : "Buenas noches";
+  document.getElementById("dash-greeting").textContent = greet;
+  document.getElementById("dash-date").textContent =
+    now.toLocaleDateString("es", { weekday:"long", day:"numeric", month:"long" });
+
+  // Ring day & phase info
+  document.getElementById("ring-day").textContent = cycleDay;
+  const phaseInfo = PHASES[currentPhase];
+  document.getElementById("ring-phase-mini").textContent = phaseInfo.name.split(" ").slice(-1)[0];
+  document.getElementById("phase-name").textContent = phaseInfo.name;
+  document.getElementById("phase-desc").textContent = phaseInfo.desc;
+
+  // Niveles actuales
+  const e2Now = Math.round(totalLevelAt(allDoses, now, "E2_SUBLINGUAL"));
+  const p4Now = Math.round(totalLevelAt(allDoses, now, "P4_RECTAL") * 10) / 10;
+  document.getElementById("stat-e2").textContent = e2Now;
+  document.getElementById("stat-p4").textContent = p4Now;
+  document.getElementById("stat-days-ghost").textContent = daysUntilGhost;
+  document.getElementById("stat-confidence").textContent = "64%";
+
+  // Ghost banner
+  if (daysUntilGhost <= 3) {
+    const gb = document.getElementById("ghost-banner");
+    gb.style.display = "flex";
+    document.getElementById("ghost-text").innerHTML =
+      `<strong>Período fantasma</strong> en ${daysUntilGhost} día${daysUntilGhost!==1?"s":""} (día ${ghostPeriod.startDay}–${ghostPeriod.endDay}). Prepárate para mayor sensibilidad sintomática.`;
+  } else if (daysUntilGhost >= 0) {
+    const gb = document.getElementById("ghost-banner");
+    gb.style.display = "flex";
+    document.getElementById("ghost-text").innerHTML =
+      `<strong>Período fantasma</strong> en ${daysUntilGhost} días (días ${ghostPeriod.startDay}–${ghostPeriod.endDay}). Espiro activa suprimiendo andrógenos.`;
+  }
+
+  // Anillo de 28 días
+  drawRing();
+
+  // Curva hormonal 48h
+  drawCurve();
+
+  // Correlaciones
+  renderCorrelations();
+}
+
+function drawRing() {
+  const canvas = document.getElementById("ring-canvas");
+  const ctx = canvas.getContext("2d");
+  const W = 240, H = 240;
+  const cx = W/2, cy = H/2;
+  const R = 100, innerR = 68;
+  const segCount = 28;
+  const gap = 0.025;
+
+  ctx.clearRect(0, 0, W, H);
+
+  for (let i = 0; i < segCount; i++) {
+    const day = i + 1;
+    const startAngle = (i / segCount) * Math.PI * 2 - Math.PI / 2 + gap;
+    const endAngle = ((i+1) / segCount) * Math.PI * 2 - Math.PI / 2 - gap;
+
+    const phase = getDayPhase(day);
+    const isGhost = day >= ghostPeriod.startDay && day <= ghostPeriod.endDay;
+    const isCurrent = day === cycleDay;
+    const isPast = day < cycleDay;
+
+    let color;
+    if (isGhost) color = "#E88C8C";
+    else if (phase === "follicular_early") color = "#8BBFB8";
+    else if (phase === "follicular_late")  color = "#B8AED4";
+    else if (phase === "ovulation_virtual") color = "#E8A4B0";
+    else if (phase === "luteal_early")     color = "#D4B87A";
+    else if (phase === "luteal_late")      color = "#D4A96A";
+    else color = "#E88C8C";
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, startAngle, endAngle);
+    ctx.arc(cx, cy, innerR, endAngle, startAngle, true);
+    ctx.closePath();
+
+    if (isCurrent) {
+      ctx.fillStyle = color;
+      ctx.fill();
+      // Glow effect
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (isPast) {
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.9;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.25;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Punto central indicador del día actual
+  const currentAngle = ((cycleDay - 0.5) / segCount) * Math.PI * 2 - Math.PI / 2;
+  const markerR = (R + innerR) / 2;
+  ctx.beginPath();
+  ctx.arc(cx + markerR * Math.cos(currentAngle), cy + markerR * Math.sin(currentAngle), 4, 0, Math.PI * 2);
+  ctx.fillStyle = "#1C1A17";
+  ctx.fill();
+}
+
+function drawCurve() {
+  const canvas = document.getElementById("curve-canvas");
+  const ctx = canvas.getContext("2d");
+  const from = new Date(now.getTime() - 24*3600000);
+  const e2Points = generateCurve(allDoses, "E2_SUBLINGUAL", from, 48, 1);
+  const p4Points = generateCurve(allDoses, "P4_RECTAL", from, 48, 1);
+
+  const W = canvas.parentElement.offsetWidth - 40;
+  canvas.width = W;
+  const H = 120;
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = { t:10, b:20, l:10, r:10 };
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+
+  const e2Max = Math.max(...e2Points.map(p => p.v), 50);
+  const p4Max = Math.max(...p4Points.map(p => p.v), 1);
+
+  // "Now" line
+  const nowX = pad.l + (24 / 48) * plotW;
+  ctx.beginPath();
+  ctx.setLineDash([3, 4]);
+  ctx.strokeStyle = "rgba(28,26,23,0.12)";
+  ctx.lineWidth = 1;
+  ctx.moveTo(nowX, pad.t);
+  ctx.lineTo(nowX, pad.t + plotH);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // E2 curve
+  function drawLine(points, maxVal, color, yScale = 1) {
+    ctx.beginPath();
+    points.forEach((p, i) => {
+      const x = pad.l + (p.h / 48) * plotW;
+      const y = pad.t + plotH - (p.v / maxVal) * plotH * yScale;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = "round";
+    ctx.stroke();
+  }
+
+  drawLine(e2Points, e2Max, "#C4728A");
+  drawLine(p4Points, p4Max, "#A67840");
+
+  // Labels
+  ctx.font = "10px DM Sans, sans-serif";
+  ctx.fillStyle = "rgba(28,26,23,0.4)";
+  ctx.textAlign = "center";
+  ctx.fillText("−24h", pad.l, pad.t + plotH + 14);
+  ctx.fillText("ahora", nowX, pad.t + plotH + 14);
+  ctx.fillText("+24h", pad.l + plotW, pad.t + plotH + 14);
+
+  // Legend
+  const legY = pad.t + 6;
+  ctx.fillStyle = "#C4728A"; ctx.fillRect(pad.l, legY, 14, 2);
+  ctx.fillStyle = "rgba(28,26,23,0.5)"; ctx.textAlign = "left";
+  ctx.fillText("E2", pad.l + 18, legY + 4);
+  ctx.fillStyle = "#A67840"; ctx.fillRect(pad.l + 44, legY, 14, 2);
+  ctx.fillStyle = "rgba(28,26,23,0.5)";
+  ctx.fillText("P4", pad.l + 62, legY + 4);
+}
+
+function renderCorrelations() {
+  const el = document.getElementById("corr-list");
+  el.innerHTML = correlations.map(c => {
+    const r = Math.abs(c.corrP4) > Math.abs(c.corrE2) ? c.corrP4 : c.corrE2;
+    const pct = Math.round(Math.abs(r) * 100);
+    const color = r > 0 ? "#D4A96A" : "#E8A4B0";
+    const sign = r > 0 ? "↑ con P4" : "↓ con E2 bajo";
+    return `<div class="corr-row">
+      <span class="corr-name">${c.name}</span>
+      <div class="corr-bar-wrap"><div class="corr-bar" style="width:${pct}%;background:${color}"></div></div>
+      <span class="corr-val" style="color:${color}">${sign}</span>
+    </div>`;
+  }).join("");
+}
+
+// ══════════════════════════════════════════
+// RENDER: SÍNTOMAS
+// ══════════════════════════════════════════
+
+function initSymptoms() {
+  const grid = document.getElementById("sliders-grid");
+  grid.innerHTML = SYMPTOM_DEFS.map(s => `
+    <div class="slider-row">
+      <div class="slider-head">
+        <span class="slider-name">${s.label}</span>
+        <span class="slider-val" id="sv-${s.key}">${s.default}</span>
+      </div>
+      <input type="range" min="1" max="10" value="${s.default}" id="sr-${s.key}"
+        oninput="document.getElementById('sv-${s.key}').textContent=this.value">
+    </div>
+  `).join("");
+
+  renderSymptomHistory();
+
+  document.getElementById("btn-save-symptoms").onclick = () => {
+    const vals = SYMPTOM_DEFS.map(s => parseInt(document.getElementById("sr-"+s.key).value));
+    symptomHistory.push({ date:"Hoy", cycleDay, vals });
+    renderSymptomHistory();
+    showToast("Síntomas guardados para el día " + cycleDay);
+  };
+}
+
+function renderSymptomHistory() {
+  const el = document.getElementById("symptom-history");
+  el.innerHTML = [...symptomHistory].reverse().map(entry => `
+    <div class="symptom-entry">
+      <span class="sym-date">${entry.date}</span>
+      <div class="sym-bars">
+        ${entry.vals.map((v,i) => {
+          const colors = ["#E8A4B0","#B8AED4","#D4A96A","#8BBFB8","#E8A4B0","#B8AED4","#8BBFB8","#D4A96A"];
+          return `<div class="sym-bar" style="height:${v*3}px;background:${colors[i]}"></div>`;
+        }).join("")}
+      </div>
+      <span class="sym-day-label">Día ${entry.cycleDay}</span>
+    </div>
+  `).join("");
+}
+
+// ══════════════════════════════════════════
+// RENDER: TRH
+// ══════════════════════════════════════════
+
+function initHRT() {
+  const regimenDrugs = ["E2_SUBLINGUAL","P4_RECTAL","SPIRO"];
+  const cards = document.getElementById("drug-cards");
+  const barColors = { estrogen:"#E8A4B0", progestogen:"#D4A96A", antiandrogen:"#8BBFB8" };
+
+  cards.innerHTML = regimenDrugs.map(key => {
+    const p = DRUG_PROFILES[key];
+    const barColor = barColors[p.category] || "#ccc";
+    const doses = { E2_SUBLINGUAL:"1 mg · cada 8h", P4_RECTAL:"200 mg · cada noche", SPIRO:"100 mg · c/12h" };
+    return `<div class="drug-card" onclick="selectDrug('${key}')">
+      <div class="drug-card-name">${p.displayName}</div>
+      <div class="drug-card-route">${p.category}</div>
+      <div class="drug-card-t12">t½ ${p.halfLifeHours}h · ${doses[key]||""}</div>
+      <div class="drug-card-bar" style="background:${barColor}"></div>
+    </div>`;
+  }).join("");
+
+  const recentDoses = [
+    { time: new Date(now.getTime() - 1.5*3600000), drug:"Estradiol sublingual", amount:"1 mg", color:"#C4728A" },
+    { time: new Date(now.getTime() - 6*3600000),   drug:"Espironolactona",      amount:"100 mg", color:"#5A8A50" },
+    { time: new Date(now.getTime() - 9.5*3600000), drug:"Estradiol sublingual", amount:"1 mg", color:"#C4728A" },
+    { time: new Date(now.getTime() - 12*3600000),  drug:"Progesterona (rectal)","amount":"200 mg", color:"#A67840" },
+    { time: new Date(now.getTime() - 17.5*3600000),drug:"Estradiol sublingual", amount:"1 mg", color:"#C4728A" },
+  ];
+
+  document.getElementById("dose-log").innerHTML = recentDoses.map(d => {
+    const hAgo = Math.round((now - d.time) / 3600000 * 10) / 10;
+    const label = hAgo < 1 ? `hace ${Math.round(hAgo*60)} min` : `hace ${hAgo}h`;
+    return `<div class="dose-row">
+      <div class="dose-dot" style="background:${d.color}"></div>
+      <span class="dose-time">${label}</span>
+      <span class="dose-drug">${d.drug}</span>
+      <span class="dose-amount">${d.amount}</span>
+    </div>`;
+  }).join("");
+}
+
+function selectDrug(key) {
+  document.querySelectorAll(".drug-card").forEach(c => c.classList.remove("selected"));
+  event.currentTarget.classList.add("selected");
+  showToast(`${DRUG_PROFILES[key].displayName} seleccionado`);
+}
+
+// ══════════════════════════════════════════
+// RENDER: ANALÍTICAS
+// ══════════════════════════════════════════
+
+function initAnalytics() {
+  const grid = document.getElementById("analytics-grid");
+  grid.innerHTML = bloodTests.map(bt => `
+    <div class="analytic-card">
+      <div class="analytic-val">${bt.val}</div>
+      <div class="analytic-unit">${bt.unit}</div>
+      <div class="analytic-lbl">${bt.label}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px;font-weight:300">${bt.sub}</div>
+    </div>
+  `).join("");
+
+  // Curva de evolución E2 por ciclo
+  const canvas = document.getElementById("analytics-canvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.parentElement.offsetWidth - 40;
+  canvas.width = W; const H = 140;
+  const cycles = [
+    [120,145,198,210,185,165,140,110,88,70,95,120,155,189,202,188,170,148,122,95,78,62,58,65,75,88,95,110],
+    [110,138,192,205,190,172,148,118,92,75,98,118,148,182,196,180,165,143,118,92,75,68,60,68,72,85,92,105],
+    [125,150,202,218,196,178,158,128,98,78,102,128,162,195,208,194,175,152,125,98,80,65,62,70,78,92,98,115],
+  ];
+  ctx.clearRect(0, 0, W, H);
+  const pad = {t:10,b:20,l:10,r:10};
+  const plotW = W-pad.l-pad.r; const plotH = H-pad.t-pad.b;
+  const maxV = 250;
+  const alpha = [0.2, 0.4, 1.0];
+  cycles.forEach((cycle, ci) => {
+    ctx.beginPath();
+    cycle.forEach((v,i) => {
+      const x = pad.l + (i/27)*plotW;
+      const y = pad.t + plotH - (v/maxV)*plotH;
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle = `rgba(196,114,138,${alpha[ci]})`;
+    ctx.lineWidth = ci===2 ? 2 : 1.5;
+    ctx.lineJoin = "round";
+    ctx.stroke();
+  });
+  // Eje días
+  ctx.font = "10px DM Sans, sans-serif";
+  ctx.fillStyle = "rgba(28,26,23,0.35)";
+  ctx.textAlign = "center";
+  [1,7,14,21,28].forEach(d => {
+    const x = pad.l + ((d-1)/27)*plotW;
+    ctx.fillText("D"+d, x, pad.t+plotH+14);
+  });
+}
+
+// ══════════════════════════════════════════
+// RENDER: DIARIO
+// ══════════════════════════════════════════
+
+function initDiary() {
+  renderDiaryEntries();
+  document.getElementById("btn-save-diary").onclick = () => {
+    const text = document.getElementById("diary-body").value.trim();
+    const score = parseInt(document.getElementById("wellbeing-slider").value);
+    if (!text) { showToast("Escribe algo antes de guardar"); return; }
+    diaryEntries.unshift({
+      date:"Hoy", phase:PHASES[currentPhase].name, text, wellbeing: score,
+    });
+    document.getElementById("diary-body").value = "";
+    renderDiaryEntries();
+    showToast("Entrada guardada y cifrada");
+  };
+}
+
+function renderDiaryEntries() {
+  document.getElementById("diary-entries").innerHTML = diaryEntries.map(e => {
+    const dots = Array.from({length:10}, (_,i) =>
+      `<div class="wellbeing-dot${i<e.wellbeing?" filled":""}"></div>`).join("");
+    return `<div class="diary-card">
+      <div class="diary-card-header">
+        <span class="diary-card-date">${e.date}</span>
+        <span class="diary-card-phase">${e.phase}</span>
+      </div>
+      <p class="diary-card-text">${e.text}</p>
+      <div class="wellbeing-dots">${dots}</div>
+    </div>`;
+  }).join("");
+}
+
+// ══════════════════════════════════════════
+// NAVEGACIÓN
+// ══════════════════════════════════════════
+
+const SCREENS = { dashboard:initDashboard, symptoms:initSymptoms, hrt:initHRT, analytics:initAnalytics, diary:initDiary };
+let activeScreen = "dashboard";
+
+document.querySelectorAll(".nav-btn[data-screen]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const target = btn.dataset.screen;
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("visible"));
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById("screen-"+target).classList.add("visible");
+    btn.classList.add("active");
+    activeScreen = target;
+    SCREENS[target]?.();
+  });
+});
+
+// Modo discreto
+let discreteActive = false;
+document.getElementById("discrete-btn").onclick = () => {
+  discreteActive = !discreteActive;
+  document.title = discreteActive ? "Mi Calendario" : "TransCycle";
+  const logo = document.querySelector(".nav-logo");
+  logo.textContent = discreteActive ? "MC" : "TC";
+  showToast(discreteActive ? "Modo discreto activado — \"Mi Calendario\"" : "Modo normal restaurado");
+};
+
+// Toast
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+initDashboard();
+</script>
+</body>
+</html>
