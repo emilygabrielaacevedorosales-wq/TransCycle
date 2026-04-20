@@ -21,7 +21,6 @@
     "expo-notifications": "^55.0.19",
     "expo-status-bar": "~55.0.5",
     "firebase": "^10.14.0",
-    "qrcode": "^1.5.4",
     "react": "19.2.0",
     "react-native": "0.83.4",
     "react-native-safe-area-context": "^5.4.0"
