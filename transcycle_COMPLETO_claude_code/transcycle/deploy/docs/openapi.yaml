@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: TransCycle & Health API
-  version: 1.0.0
+  version: 1.0.4
   description: |
     API REST para la app de seguimiento hormonal TransCycle.
     Todos los endpoints protegidos requieren Bearer JWT en el header Authorization.
