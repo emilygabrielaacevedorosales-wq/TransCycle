@@ -76,7 +76,7 @@ app.use(express.json({ limit: "2mb" }));
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
-    version: "1.0.0",
+    version: "1.0.4",
     timestamp: new Date().toISOString(),
   });
 });
