@@ -15,9 +15,7 @@
     "plugins": [
       ["expo-notifications", {
         "icon": "./assets/icon.png",
-        "color": "#C4728A",
-        "androidMode": "default",
-        "sounds": ["default"]
+        "color": "#C4728A"
       }]
     ]
   }
