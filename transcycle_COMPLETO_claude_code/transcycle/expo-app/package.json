@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
-    "babel-preset-expo": "^10.0.0",
+    "babel-preset-expo": "~9.5.0",
     "expo": "^55.0.15",
     "expo-local-authentication": "~55.0.13",
     "expo-notifications": "^55.0.19",
