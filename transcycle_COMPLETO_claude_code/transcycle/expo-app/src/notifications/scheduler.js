@@ -3,6 +3,35 @@ import * as Notifications from "expo-notifications";
 let scheduledNotifications = {};
 let medicationTimers = {};
 
+export function setupNotificationHandlers() {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
+
+export async function scheduleDailySymptomReminder() {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "📋 Registro diario",
+        body: "No olvides registrar tus síntomas de hoy",
+        priority: "default",
+      },
+      trigger: {
+        hour: 20,
+        minute: 0,
+        repeats: true,
+      },
+    });
+  } catch (error) {
+    console.warn("Error programando recordatorio diario:", error);
+  }
+}
+
 export async function requestPermissions() {
   try {
     const { status } = await Notifications.requestPermissionsAsync();

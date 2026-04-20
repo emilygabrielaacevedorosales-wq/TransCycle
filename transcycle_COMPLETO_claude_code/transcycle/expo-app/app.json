@@ -5,18 +5,38 @@
     "version": "1.0.4",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF8F5"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
     "android": {
       "package": "com.transcycle.expo",
-      "permissions": ["android.permission.POST_NOTIFICATIONS"]
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FAF8F5"
+      },
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "plugins": [
-      ["expo-notifications", {
-        "icon": "./assets/icon.png",
-        "color": "#C4728A"
-      }]
-    ]
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#C4728A"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "374500a3-656c-412c-88b2-6afcf544300e"
+      }
+    }
   }
 }
