@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "TransCycle",
+    "slug": "transcycle-expo",
+    "version": "1.0.4",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.transcycle.expo",
+      "permissions": ["android.permission.POST_NOTIFICATIONS"]
+    },
+    "plugins": [
+      ["expo-notifications", {
+        "icon": "./assets/icon.png",
+        "color": "#C4728A",
+        "androidMode": "default",
+        "sounds": ["default"]
+      }]
+    ]
+  }
+}
